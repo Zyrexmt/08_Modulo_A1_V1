@@ -160,7 +160,7 @@ class _RankPageState extends State<RankPage> {
           backgroundColor: Color(0xffededed),
           foregroundColor: Color(0xff333333),
           padding: const EdgeInsets.symmetric(vertical: 15),
-          side: const BorderSide(color: Color(0xff333333), width: 2),
+          side: const BorderSide(color: Color(0xff333334), width: 2),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
