@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 
-enum Tetromino { L, J, I, O, S, Z, T }
+enum Tetromino { T, S, I, L }
 
 class TetrisPiece {
   Tetromino type;
@@ -11,51 +11,61 @@ class TetrisPiece {
 
   static const int colCount = 6;
 
-  TetrisPiece(this.type) : color = _colorFor(type) {
-    initPosition();
+  TetrisPiece(this.type, {int? spawnCol}) : color = _colorFor(type) {
+    initPosition(spawnCol: spawnCol);
   }
 
   static Color _colorFor(Tetromino type) {
     switch (type) {
-      case Tetromino.L:
-        return Colors.orange;
-      case Tetromino.J:
-        return Colors.blue;
-      case Tetromino.I:
-        return Colors.cyan;
-      case Tetromino.O:
-        return Colors.yellow;
-      case Tetromino.S:
-        return Colors.green;
-      case Tetromino.Z:
-        return Colors.red;
       case Tetromino.T:
-        return Colors.purple;
+        return const Color(0xffd81b60);
+      case Tetromino.S:
+        return const Color(0xff388e3c);
+      case Tetromino.I:
+        return const Color(0xffe64a19);
+      case Tetromino.L:
+        return const Color(0xff1e88e5);
     }
   }
 
-  void initPosition() {
+  void initPosition({int? spawnCol}) {
+    final rng = Random();
     switch (type) {
-      case Tetromino.L:
-        position = [2, 8, 14, 15];
-        break;
-      case Tetromino.J:
-        position = [2, 8, 14, 15];
-        break;
-      case Tetromino.I:
-        position = [2, 8, 14, 15];
-        break;
-      case Tetromino.O:
-        position = [2, 8, 14, 15];
+      case Tetromino.T:
+        final col = spawnCol ?? rng.nextInt(colCount - 2);
+        position = [
+          col + 1,
+          col + colCount,
+          col + colCount + 1,
+          col + colCount + 2,
+        ];
         break;
       case Tetromino.S:
-        position = [2, 8, 14, 15];
+        final col = spawnCol ?? rng.nextInt(colCount - 1);
+        position = [
+          col + 1,
+          col + colCount,
+          col + colCount + 1,
+          col + colCount * 2,
+        ];
         break;
-      case Tetromino.Z:
-        position = [2, 8, 14, 15];
+      case Tetromino.I:
+        final col = spawnCol ?? rng.nextInt(colCount);
+        position = [
+          col + 2,
+          col + colCount + 2,
+          col + colCount * 2 + 2,
+          col + colCount * 3 + 2,
+        ];
         break;
-      case Tetromino.T:
-        position = [2, 8, 14, 15];
+      case Tetromino.L:
+        final col = spawnCol ?? rng.nextInt(colCount - 2);
+        position = [
+          col + 2,
+          col + colCount,
+          col + colCount + 1,
+          col + colCount + 2,
+        ];
         break;
     }
   }
@@ -84,7 +94,7 @@ class TetrisGameProvider with ChangeNotifier {
   }
 
   void _startTimer(int ms) {
-    _gameTimer?.cancel;
+    _gameTimer?.cancel();
     _tickMs = ms;
     _gameTimer = Timer.periodic(Duration(milliseconds: ms), (_) {
       moveDown();
@@ -92,24 +102,36 @@ class TetrisGameProvider with ChangeNotifier {
   }
 
   void setFastDrop(bool fast) {
-    int target = fast ? 100 : 500;
+    int target = fast ? 1000 : 500;
     if (_tickMs != target) _startTimer(target);
   }
+
+  static const int spawnOffset = -colCount;
 
   void _createNewPiece() {
     final types = Tetromino.values;
     currentPiece = TetrisPiece(types[Random().nextInt(types.length)]);
 
-    if (_checkCollision()) {
-      isGameOver = true;
-      _gameTimer?.cancel();
-      notifyListeners();
+    currentPiece!.position = currentPiece!.position
+        .map((p) => p + spawnOffset)
+        .toList();
+
+    for (int pos in currentPiece!.position) {
+      if (pos >= 0 && pos < totalCells && grid[pos] != null) {
+        isGameOver = true;
+        _gameTimer?.cancel();
+        grid = List.generate(totalCells, (_) => null);
+        currentPiece = null;
+        notifyListeners();
+        return;
+      }
     }
+    notifyListeners();
   }
 
   void moveLeft() {
     if (currentPiece == null || isGameOver) return;
-    if (_canMove(-1)) {
+    if (_canMoveHorizontal(-1)) {
       for (int i = 0; i < currentPiece!.position.length; i++) {
         currentPiece!.position[i]--;
       }
@@ -119,19 +141,17 @@ class TetrisGameProvider with ChangeNotifier {
 
   void moveRight() {
     if (currentPiece == null || isGameOver) return;
-    if (_canMove(1)) {
+    if (_canMoveHorizontal(1)) {
       for (int i = 0; i < currentPiece!.position.length; i++) {
-        currentPiece!.position[i] += colCount;
+        currentPiece!.position[i]++;
       }
-    } else {
-      _landPiece();
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   void moveDown() {
     if (currentPiece == null || isGameOver) return;
-    if (_canMove(colCount)) {
+    if (_canMoveDown()) {
       for (int i = 0; i < currentPiece!.position.length; i++) {
         currentPiece!.position[i] += colCount;
       }
@@ -141,25 +161,32 @@ class TetrisGameProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  bool _canMove(int direction) {
+  bool _canMoveDown() {
     for (int pos in currentPiece!.position) {
-      int next = pos + direction;
-
+      int next = pos + colCount;
       if (next >= totalCells) return false;
-
-      if (direction == -1 && pos % colCount == 0) return false;
-
-      if (direction == 1 && (pos + 1) % colCount == 0) return false;
-
       if (next >= 0 && grid[next] != null) return false;
+    }
+    return true;
+  }
+
+  bool _canMoveHorizontal(int dir) {
+    for (int pos in currentPiece!.position) {
+      if (dir == -1 && pos % colCount == 0) return false;
+      if (dir == 1 && pos % colCount == colCount - 1) return false;
+      int next = pos + dir;
+      if (next >= 0 && next < totalCells && grid[next] != null) {
+        return false;
+      }
     }
     return true;
   }
 
   bool _checkCollision() {
     for (int pos in currentPiece!.position) {
-      if (pos >= 0 && pos < totalCells && grid[pos] != null)
+      if (pos >= 0 && pos < totalCells && grid[pos] != null) {
         return true;
+      }
     }
     return false;
   }

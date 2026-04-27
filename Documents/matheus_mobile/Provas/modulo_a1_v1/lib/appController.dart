@@ -30,3 +30,5 @@ class AppControllwe extends StatelessWidget {
     );
   }
 }
+
+String globalName = '';

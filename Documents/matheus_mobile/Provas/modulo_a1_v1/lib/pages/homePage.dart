@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:modulo_a1_v1/appController.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -43,15 +44,17 @@ class _HomePageState extends State<HomePage> {
                     if (_nameController.text.trim().isEmpty) {
                       setState(() => _showError = true);
                     } else {
-                      Navigator.of(
-                        context,
-                      ).pushNamed('/game');
+                      globalName = _nameController.text.toString();
+                      Navigator.of(context).pushNamed('/game');
                     }
                   }),
                   SizedBox(height: 20),
-                  _buildButton('Ranking', () => Navigator.of(context).pushNamed('/rank')),
-                  SizedBox(height: 40,),
-                  if (_showError) _buildErrorAlert()
+                  _buildButton(
+                    'Ranking',
+                    () => Navigator.of(context).pushNamed('/rank'),
+                  ),
+                  SizedBox(height: 40),
+                  if (_showError) _buildErrorAlert(),
                 ],
               ),
             ),

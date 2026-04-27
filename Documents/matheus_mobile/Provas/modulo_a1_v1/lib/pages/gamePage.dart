@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:modulo_a1_v1/appController.dart';
 import 'package:modulo_a1_v1/services/rankingEntry.dart';
 import 'package:modulo_a1_v1/services/tetrisLogic.dart';
 import 'package:provider/provider.dart';
@@ -21,10 +22,14 @@ class _GamePageState extends State<GamePage> {
   StreamSubscription<AccelerometerEvent>? _accelSub;
   double _currentX = 0;
   double _currentY = 0;
+  double _baseX = 0;
+  double _baseY = 0;
+  bool _baselineCaptured = false;
   Timer? _inputTimer;
   bool _dialogShown = false;
+  bool _disposed = false;
 
-  String _playerName = '';
+  String _playerName = globalName;
 
   @override
   void didChangeDependencies() {
@@ -37,7 +42,9 @@ class _GamePageState extends State<GamePage> {
   @override
   void initState() {
     super.initState();
-    _startGame();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startCountdown();
+    });
   }
 
   void _startCountdown() {
@@ -67,6 +74,11 @@ class _GamePageState extends State<GamePage> {
     game.startGame();
 
     _accelSub = accelerometerEventStream().listen((event) {
+      if (!_baselineCaptured) {
+        _baseX = event.x;
+        _baseY = event.y;
+        _baselineCaptured = true;
+      }
       _currentX = event.x;
       _currentY = event.y;
     });
@@ -74,22 +86,27 @@ class _GamePageState extends State<GamePage> {
     _inputTimer = Timer.periodic(const Duration(milliseconds: 250), (
       _,
     ) {
-      if (!_gameStarted) return;
+      if (!_gameStarted || !_baselineCaptured) return;
       final g = Provider.of<TetrisGameProvider>(
         context,
         listen: false,
       );
 
-      if (_currentX > 2.0)
+      final dx = _currentX - _baseX;
+      final dy = _currentY - _baseY;
+      if (dx > 2.0)
         g.moveLeft();
-      else if (_currentX < -2.0)
+      else if (dx < -2.0)
         g.moveRight();
 
-      g.setFastDrop(_currentY > 3.0);
+      g.setFastDrop(dy < -3.0);
     });
   }
 
   Future<void> _saveAndExit(int score) async {
+    _accelSub?.cancel();
+    _inputTimer?.cancel();
+
     final prefs = await SharedPreferences.getInstance();
     final String? existing = prefs.getString('ranking');
     List<RankingEntry> list = [];
@@ -98,13 +115,18 @@ class _GamePageState extends State<GamePage> {
       final jsonList = jsonDecode(existing) as List<dynamic>;
       list = jsonList.map((e) => RankingEntry.fromJson(e)).toList();
     }
-    list.add(RankingEntry(playerName: _playerName, score: score));
+
+    final name = _playerName.trim().isEmpty
+        ? 'Anônimo'
+        : _playerName.trim();
+
+    list.add(RankingEntry(playerName: name, score: score));
     await prefs.setString(
       'ranking',
       jsonEncode(list.map((e) => e.toJson()).toList()),
     );
 
-    if (!mounted) return;
+    if (!mounted || _disposed) return;
     Navigator.of(context).pushReplacementNamed('/home');
   }
 
@@ -119,6 +141,7 @@ class _GamePageState extends State<GamePage> {
 
   @override
   void dispose() {
+    _disposed = true;
     _accelSub?.cancel();
     _inputTimer?.cancel();
     super.dispose();
