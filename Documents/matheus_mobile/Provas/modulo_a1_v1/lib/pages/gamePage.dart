@@ -99,7 +99,7 @@ class _GamePageState extends State<GamePage> {
       else if (dx < -2.0)
         g.moveRight();
 
-      g.setFastDrop(dy < -3.0);
+      g.setFastDrop(dy > -3.0);
     });
   }
 
@@ -163,14 +163,21 @@ class _GamePageState extends State<GamePage> {
             return Column(
               children: [
                 const SizedBox(height: 20),
-                if (_countdown > 0)
-                  Text(
-                    '$_countdown',
-                    style: const TextStyle(
-                      fontSize: 80,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                _countdown > 0
+                    ? Text(
+                        '$_countdown',
+                        style: const TextStyle(
+                          fontSize: 64,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                    : Text(
+                        'JÁ!',
+                        style: const TextStyle(
+                          fontSize: 64,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                 const Text(
                   'PONTUAÇÃO',
                   style: TextStyle(
@@ -180,10 +187,7 @@ class _GamePageState extends State<GamePage> {
                 ),
                 const SizedBox(height: 5),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 10,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 40),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     border: Border.all(
@@ -201,51 +205,84 @@ class _GamePageState extends State<GamePage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                Expanded(
-                  child: Center(
-                    child: Container(
-                      width: 240,
-                      height: 400,
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: const Color(0xff333333),
-                          width: 2,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    SizedBox(width: 15),
+
+                    Column(
+                      children: [
+                        Icon(Icons.arrow_circle_left, size: 30),
+                        Text('Inclinar'),
+                        Text('Esquerda'),
+                      ],
+                    ),
+
+                    SizedBox(width: 5),
+
+                    Expanded(
+                      child: Center(
+                        child: Container(
+                          width: 240,
+                          height: 400,
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: const Color(0xff333333),
+                              width: 2,
+                            ),
+                          ),
+                          child: GridView.builder(
+                            physics:
+                                const NeverScrollableScrollPhysics(),
+                            itemCount: 60,
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 6,
+                                ),
+                            itemBuilder: (context, index) {
+                              Color? cellColor = game.grid[index];
+
+                              if (game.currentPiece != null &&
+                                  game.currentPiece!.position
+                                      .contains(index)) {
+                                cellColor = game.currentPiece!.color;
+                              }
+
+                              return Container(
+                                margin: const EdgeInsets.all(1),
+                                decoration: BoxDecoration(
+                                  color:
+                                      cellColor ?? Colors.transparent,
+                                  border: Border.all(
+                                    color: const Color(0xffededed),
+                                    width: 0.5,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ),
-                      child: GridView.builder(
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: 60,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 6,
-                            ),
-                        itemBuilder: (context, index) {
-                          Color? cellColor = game.grid[index];
-
-                          if (game.currentPiece != null &&
-                              game.currentPiece!.position.contains(
-                                index,
-                              )) {
-                            cellColor = game.currentPiece!.color;
-                          }
-
-                          return Container(
-                            margin: const EdgeInsets.all(1),
-                            decoration: BoxDecoration(
-                              color: cellColor ?? Colors.transparent,
-                              border: Border.all(
-                                color: const Color(0xffededed),
-                                width: 0.5,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
                     ),
-                  ),
+
+                    SizedBox(width: 10),
+
+                    Column(
+                      children: [
+                        Icon(Icons.arrow_circle_right, size: 30),
+                        Text('Inclinar'),
+                        Text('Direita'),
+                      ],
+                    ),
+
+                    SizedBox(width: 5),
+                  ],
                 ),
-                _buildControlsHint(),
-                const SizedBox(height: 20),
+                SizedBox(height: 10),
+
+                Icon(Icons.double_arrow, size: 30),
+                Text('Inclinar'),
+                Text('Frente'),
 
                 _buildEncerraButton(),
                 const SizedBox(height: 20),
@@ -254,26 +291,6 @@ class _GamePageState extends State<GamePage> {
           },
         ),
       ),
-    );
-  }
-
-  Widget _buildControlsHint() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [],
-    );
-  }
-
-  Widget _hintItem(IconData icon, String text) {
-    return Column(
-      children: [
-        Icon(icon, size: 20, color: Colors.grey),
-        Text(
-          text,
-          style: const TextStyle(fontSize: 10, color: Colors.grey),
-          textAlign: TextAlign.center,
-        ),
-      ],
     );
   }
 
@@ -314,8 +331,8 @@ class _GamePageState extends State<GamePage> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.of(context).pop();
               _saveAndExit(score);
+              Navigator.of(context).pop();
             },
             child: Text('OK'),
           ),
