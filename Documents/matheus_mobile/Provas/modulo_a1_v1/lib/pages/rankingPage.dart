@@ -16,6 +16,7 @@ class _RankPageState extends State<RankPage> {
 
   void initState() {
     super.initState();
+    _loadRanking();
   }
 
   Future<void> _loadRanking() async {
@@ -81,10 +82,9 @@ class _RankPageState extends State<RankPage> {
                         ),
                 ),
               ),
-              const SizedBox(height: 30,),
+              const SizedBox(height: 30),
               _buildBackButton(),
-              const SizedBox(height: 30,),
-
+              const SizedBox(height: 30),
             ],
           ),
         ),
@@ -155,7 +155,8 @@ class _RankPageState extends State<RankPage> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: () => Navigator.of(context).pushReplacementNamed('/home'),
+        onPressed: () =>
+            Navigator.of(context).pushReplacementNamed('/home'),
         style: ElevatedButton.styleFrom(
           backgroundColor: Color(0xffededed),
           foregroundColor: Color(0xff333333),

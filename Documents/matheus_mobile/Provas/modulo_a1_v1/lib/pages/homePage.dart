@@ -45,11 +45,11 @@ class _HomePageState extends State<HomePage> {
                     } else {
                       Navigator.of(
                         context,
-                      ).pushReplacementNamed('/game');
+                      ).pushNamed('/game');
                     }
                   }),
                   SizedBox(height: 20),
-                  _buildButton('Ranking', () => Navigator.of(context).pushReplacementNamed('/rank')),
+                  _buildButton('Ranking', () => Navigator.of(context).pushNamed('/rank')),
                   SizedBox(height: 40,),
                   if (_showError) _buildErrorAlert()
                 ],
