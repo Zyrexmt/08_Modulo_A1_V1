@@ -136,7 +136,7 @@ class _GamePageState extends State<GamePage> {
       listen: false,
     );
     game.stopGame();
-    _saveAndExit(game.score);
+    _showGameOverDialog(game.score);
   }
 
   @override
@@ -150,145 +150,153 @@ class _GamePageState extends State<GamePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Consumer<TetrisGameProvider>(
-          builder: (context, game, _) {
-            if (game.isGameOver && _gameStarted && !_dialogShown) {
-              _dialogShown = true;
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                _showGameOverDialog(game.score);
-              });
-            }
+      body: SingleChildScrollView(
+        child: SafeArea(
+          child: Consumer<TetrisGameProvider>(
+            builder: (context, game, _) {
+              if (game.isGameOver && _gameStarted && !_dialogShown) {
+                _dialogShown = true;
+                Future.microtask(() {
+                  if (mounted) {
+                    _showGameOverDialog(game.score);
+                  }
+                });
+              }
 
-            return Column(
-              children: [
-                const SizedBox(height: 20),
-                _countdown > 0
-                    ? Text(
-                        '$_countdown',
-                        style: const TextStyle(
-                          fontSize: 64,
-                          fontWeight: FontWeight.bold,
+              return Column(
+                children: [
+                  const SizedBox(height: 20),
+                  _countdown > 0
+                      ? Text(
+                          '$_countdown',
+                          style: const TextStyle(
+                            fontSize: 64,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      : Text(
+                          'JÁ!',
+                          style: const TextStyle(
+                            fontSize: 64,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      )
-                    : Text(
-                        'JÁ!',
-                        style: const TextStyle(
-                          fontSize: 64,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                const Text(
-                  'PONTUAÇÃO',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(
-                      color: const Color(0xff333333),
-                      width: 2,
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    '${game.score.toString().padLeft(3, '0')} pts',
-                    style: const TextStyle(
-                      fontSize: 32,
+                  const Text(
+                    'PONTUAÇÃO',
+                    style: TextStyle(
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    SizedBox(width: 15),
-
-                    Column(
-                      children: [
-                        Icon(Icons.arrow_circle_left, size: 30),
-                        Text('Inclinar'),
-                        Text('Esquerda'),
-                      ],
+                  const SizedBox(height: 5),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
                     ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(
+                        color: const Color(0xff333333),
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${game.score.toString().padLeft(3, '0')} pts',
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      SizedBox(width: 15),
 
-                    SizedBox(width: 5),
+                      Column(
+                        children: [
+                          Icon(Icons.arrow_circle_left, size: 30),
+                          Text('Inclinar'),
+                          Text('Esquerda'),
+                        ],
+                      ),
 
-                    Expanded(
-                      child: Center(
-                        child: Container(
-                          width: 240,
-                          height: 400,
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: const Color(0xff333333),
-                              width: 2,
+                      SizedBox(width: 5),
+
+                      Expanded(
+                        child: Center(
+                          child: Container(
+                            width: 240,
+                            height: 400,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: const Color(0xff333333),
+                                width: 2,
+                              ),
                             ),
-                          ),
-                          child: GridView.builder(
-                            physics:
-                                const NeverScrollableScrollPhysics(),
-                            itemCount: 60,
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 6,
-                                ),
-                            itemBuilder: (context, index) {
-                              Color? cellColor = game.grid[index];
-
-                              if (game.currentPiece != null &&
-                                  game.currentPiece!.position
-                                      .contains(index)) {
-                                cellColor = game.currentPiece!.color;
-                              }
-
-                              return Container(
-                                margin: const EdgeInsets.all(1),
-                                decoration: BoxDecoration(
-                                  color:
-                                      cellColor ?? Colors.transparent,
-                                  border: Border.all(
-                                    color: const Color(0xffededed),
-                                    width: 0.5,
+                            child: GridView.builder(
+                              physics:
+                                  const NeverScrollableScrollPhysics(),
+                              itemCount: 60,
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 6,
                                   ),
-                                ),
-                              );
-                            },
+                              itemBuilder: (context, index) {
+                                Color? cellColor = game.grid[index];
+
+                                if (game.currentPiece != null &&
+                                    game.currentPiece!.position
+                                        .contains(index)) {
+                                  cellColor =
+                                      game.currentPiece!.color;
+                                }
+
+                                return Container(
+                                  margin: const EdgeInsets.all(1),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        cellColor ??
+                                        Colors.transparent,
+                                    border: Border.all(
+                                      color: const Color(0xffededed),
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ),
-                    ),
 
-                    SizedBox(width: 10),
+                      SizedBox(width: 10),
 
-                    Column(
-                      children: [
-                        Icon(Icons.arrow_circle_right, size: 30),
-                        Text('Inclinar'),
-                        Text('Direita'),
-                      ],
-                    ),
+                      Column(
+                        children: [
+                          Icon(Icons.arrow_circle_right, size: 30),
+                          Text('Inclinar'),
+                          Text('Direita'),
+                        ],
+                      ),
 
-                    SizedBox(width: 5),
-                  ],
-                ),
-                SizedBox(height: 10),
+                      SizedBox(width: 5),
+                    ],
+                  ),
+                  SizedBox(height: 10),
 
-                Icon(Icons.double_arrow, size: 30),
-                Text('Inclinar'),
-                Text('Frente'),
+                  Icon(Icons.double_arrow, size: 30),
+                  Text('Inclinar'),
+                  Text('Frente'),
 
-                _buildEncerraButton(),
-                const SizedBox(height: 20),
-              ],
-            );
-          },
+                  _buildEncerraButton(),
+                  const SizedBox(height: 20),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -325,19 +333,70 @@ class _GamePageState extends State<GamePage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        title: const Text('Fim de Jogo'),
-        content: Text('Sua pontuação: $score pts'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              _saveAndExit(score);
-              Navigator.of(context).pop();
-            },
-            child: Text('OK'),
+      builder: (dialogContext) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4),
           ),
-        ],
-      ),
+          child: Container(
+            padding: EdgeInsets.zero,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: Color(0xff333333)),
+                    ),
+                  ),
+                  child: const Text(
+                    'Fim de Jogo',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'Sua pontuação: $score pts',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ),
+                Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      top: BorderSide(color: Color(0xff333333)),
+                    ),
+                  ),
+                  child: TextButton(
+                    onPressed: () async {
+                      final game = Provider.of<TetrisGameProvider>(
+                        context,
+                        listen: false,
+                      );
+                      Navigator.of(dialogContext).pop();
+                      game.resetGame();
+                      await _saveAndExit(score);
+                    },
+                    child: const Text(
+                      'OK',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -18,13 +18,7 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: Color(0xfff7f7f7),
       body: Stack(
         children: [
-          Opacity(
-            opacity: 0.7,
-            child: Image.asset(
-              'assets/images/background.png',
-              scale: 0.5,
-            ),
-          ),
+          _buildBackground(),
           Center(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: 40),
@@ -134,6 +128,16 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.close),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBackground() {
+    return Opacity(
+      opacity: 0.3,
+      child: GridView.builder(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 5),
+        itemBuilder: (context, index) => Icon(Icons.grid_on, color: Colors.grey[400]),
       ),
     );
   }

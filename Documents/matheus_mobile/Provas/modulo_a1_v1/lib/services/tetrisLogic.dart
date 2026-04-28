@@ -120,8 +120,6 @@ class TetrisGameProvider with ChangeNotifier {
       if (pos >= 0 && pos < totalCells && grid[pos] != null) {
         isGameOver = true;
         _gameTimer?.cancel();
-        grid = List.generate(totalCells, (_) => null);
-        currentPiece = null;
         notifyListeners();
         return;
       }
@@ -210,5 +208,14 @@ class TetrisGameProvider with ChangeNotifier {
   void dispose() {
     _gameTimer?.cancel();
     super.dispose();
+  }
+
+  void resetGame() {
+    grid = List.generate(totalCells, (_) => null);
+    currentPiece = null;
+    score = 0;
+    isGameOver = false;
+
+    notifyListeners();
   }
 }
